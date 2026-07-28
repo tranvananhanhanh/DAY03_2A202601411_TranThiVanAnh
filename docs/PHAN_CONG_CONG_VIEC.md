@@ -6,8 +6,14 @@
 
 ## 👥 1. BẢNG PHÂN VAI & FILE ĐẢM NHẬN
 
-| Vai trò (Role)                               | File đảm nhận           | Nhiệm vụ chính                                                                                          | Người đảm nhận  |
-| :-------------------------------------------- | :------------------------- | :--------------------------------------------------------------------------------------------------------- | :------------------- |
+| Vai trò (Role)                               | File đảm nhận           | Nhiệm vụ chính                                                                                                                                         | Người đảm nhận     |
+| :------------------------------------------- | :---------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------- |
+| **Role 1: Product Architect**                | `config/test_cases.json` | Phân tích bài toán, xác định luồng nghiệp vụ và xây dựng bộ Test Case để đánh giá Chatbot và ReAct Agent, đảm bảo bao phủ các tình huống thực tế. | **Trần Thị Vân Anh** |
+| **Role 2: Tool Engineer**                    | `src/tools.py`          | Thiết kế và hiện thực các Tool cho Agent (tra cứu triệu chứng, kiểm tra lịch bác sĩ, đặt lịch khám...), chuẩn hóa input/output và tích hợp vào Agent. | **Trần Thị Vân Anh** |
+| **Role 3: Prompt & Safeguard Engineer**      | `src/prompts.py`        | Xây dựng ReAct System Prompt, thiết kế Guardrails và quy định luồng Thought → Action → Observation → Final Answer để Agent sử dụng Tool đúng quy trình. | **Trần Thị Vân Anh** |
+| **Role 4: Core Developer / Integrator**      | `src/app.py`            | Phát triển vòng lặp ReAct Agent, tích hợp Prompt, Tool và Test Case thành ứng dụng hoàn chỉnh; đồng bộ mã nguồn và lắp ráp toàn bộ hệ thống. | **Cao Nguyệt Ánh** |
+| **Role 5: Observability & Evaluation Engineer** | `docs/trace_eval.md` | Xây dựng Scoring Matrix, phân tích Trace Log, đánh giá chất lượng Reasoning và Tool Calling của Agent, đồng thời đề xuất các cải tiến dựa trên kết quả thực nghiệm. | **Cao Nguyệt Ánh** |
+
 | **Role 1: Product Architect**           | `config/test_cases.json` | Định hướng bài toán & soạn bộ câu test case                                                       | `________________` |
 | **Role 2: Tool Engineer**               | `src/tools.py`           | Định nghĩa các công cụ (Tools) cho Agent                                                             | `________________` |
 | **Role 3: Prompt Engineer**             | `src/prompts.py`         | Viết ReAct System Prompt & phanh Guardrails                                                               | `________________` |
