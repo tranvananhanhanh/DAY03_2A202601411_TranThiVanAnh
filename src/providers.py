@@ -25,10 +25,11 @@ class BaseLLMProvider:
 
 
 class GeminiProvider(BaseLLMProvider):
-    """Google Gemini Provider — gọi REST API trực tiếp, không cần SDK google-genai"""
+    """Google Gemini Provider — gọi REST API trực tiếp với error handling an toàn"""
     def __init__(self, api_key: str = None, model: str = None):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        self.model_name = model or os.getenv("LLM_MODEL") or "gemini-2.5-flash"
+        # Sử dụng model gemini-2.0-flash chuẩn và ổn định
+        self.model_name = model or os.getenv("LLM_MODEL") or "gemini-2.0-flash"
 
     def generate(self, prompt: str, system_prompt: str = "") -> str:
         if not self.api_key or self.api_key == "your_gemini_api_key_here":
@@ -38,16 +39,43 @@ class GeminiProvider(BaseLLMProvider):
                 f"https://generativelanguage.googleapis.com/v1beta/models/"
                 f"{self.model_name}:generateContent?key={self.api_key}"
             )
-            contents = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+            
             payload = {
-                "contents": [{"parts": [{"text": contents}]}]
+                "contents": [{"role": "user", "parts": [{"text": prompt}]}]
             }
-            res = requests.post(url, json=payload, timeout=30)
-            if res.status_code == 200:
-                data = res.json()
-                return data["candidates"][0]["content"]["parts"][0]["text"]
-            else:
-                return f"[Gemini API Error {res.status_code}]: {res.text}"
+            if system_prompt:
+                payload["system_instruction"] = {
+                    "parts": [{"text": system_prompt}]
+                }
+                
+            # Thử tối đa 3 lần nếu gặp lỗi Rate Limit (429)
+            for attempt in range(3):
+                res = requests.post(url, json=payload, timeout=60)
+                if res.status_code == 200:
+                    data = res.json()
+                    candidates = data.get("candidates", [])
+                    if not candidates:
+                        return "[Gemini Empty]: Không nhận được phản hồi từ AI."
+                    
+                    candidate = candidates[0]
+                    content = candidate.get("content", {})
+                    parts = content.get("parts", [])
+                    
+                    if parts and "text" in parts[0]:
+                        return parts[0]["text"]
+                    
+                    finish_reason = candidate.get("finishReason", "UNKNOWN")
+                    return f"[Gemini Blocked]: Phản hồi bị dừng do lý do {finish_reason}."
+                
+                elif res.status_code == 429:
+                    # Nếu gặp lỗi Rate Limit 429, tạm dừng 4 giây rồi thử lại
+                    if attempt < 2:
+                        import time
+                        time.sleep(4)
+                        continue
+                    return f"[Gemini API Error 429]: Hết hạn ngạch tạm thời. Vui lòng thử lại sau ít phút."
+                else:
+                    return f"[Gemini API Error {res.status_code}]: {res.text}"
         except Exception as e:
             return f"[Gemini Exception]: {str(e)}"
 

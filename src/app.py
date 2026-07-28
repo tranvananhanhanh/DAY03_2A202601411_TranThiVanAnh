@@ -198,6 +198,16 @@ def run_react_agent(user_query: str, provider) -> str:
         # Gọi LLM với toàn bộ history
         llm_input = history
         llm_output = provider.generate(llm_input, system_prompt=REACT_SYSTEM_PROMPT)
+
+        # Nếu dính exception/timeout từ provider, không nạp chuỗi lỗi vào history để tránh làm nặng prompt
+        if any(err in llm_output for err in ["[Gemini Exception]", "[Gemini API Error]", "timed out"]):
+            print(f"⚠️  Cảnh báo kết nối/Timeout: {llm_output[:100]}...")
+            consecutive_errors += 1
+            if consecutive_errors >= 3:
+                print(f"\n🛡️  GUARDRAIL EARLY STOP: {consecutive_errors} lỗi liên tiếp. Ngắt an toàn!")
+                break
+            continue
+
         print(f"📝 LLM output:\n{llm_output}")
 
         # Kiểm tra Final Answer trước
@@ -216,7 +226,7 @@ def run_react_agent(user_query: str, provider) -> str:
             # LLM không sinh ra Action hợp lệ — thêm nhắc nhở vào history
             error_msg = "LỖI PARSE: Không tìm thấy Action hợp lệ. Hãy dùng đúng định dạng: Action: tool_name[\"arg\"]"
             print(f"⚠️  {error_msg}")
-            history += f"{llm_output}\nObservation: {error_msg}\n"
+            history += f"\nObservation: {error_msg}\n"
             consecutive_errors += 1
         else:
             tool_name, args = parsed
@@ -226,14 +236,17 @@ def run_react_agent(user_query: str, provider) -> str:
             observation = execute_tool(tool_name, args)
             print(f"👁️  Observation: {observation}")
 
+            # Rút gọn observation nếu quá dài (History Pruning)
+            clean_obs = observation if len(observation) < 250 else observation[:250] + "..."
+
             # Kiểm tra lỗi từ tool
             if observation.startswith("LỖI"):
                 consecutive_errors += 1
             else:
                 consecutive_errors = 0  # Reset khi tool thành công
 
-            # Append vào history
-            history += f"{llm_output}\nObservation: {observation}\n"
+            # Append vào history gọn gàng
+            history += f"\nThought: Da dung tool {tool_name}\nAction: {tool_name}{args}\nObservation: {clean_obs}\n"
 
         # Guardrail: dừng sớm nếu lỗi liên tiếp 3 lần
         if consecutive_errors >= 3:
