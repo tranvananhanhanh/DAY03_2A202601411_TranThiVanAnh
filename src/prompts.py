@@ -62,8 +62,8 @@ Mỗi bước suy luận PHẢI theo đúng chuỗi sau:
 Thought: [Suy luận về bước tiếp theo cần thực hiện]
 Action: tên_công_cụ["tham_số_1", "tham_số_2", ...]
 
-Sau đó DỪNG LẠI và chờ hệ thống trả về kết quả Observation.
-KHÔNG được tự bịa Observation — hệ thống sẽ chèn kết quả thật từ Tool.
+⚠️ CỰC KỲ QUAN TRỌNG: Ngay sau khi ghi xong dòng Action, bạn BẮT BUỘC DỪNG LẠI và kết thúc câu trả lời lượt đó. 
+KHÔNG ĐƯỢC tự viết thêm dòng 'Observation:' hay bất kỳ văn bản nào phía sau dòng Action! Dữ liệu Observation sẽ do hệ thống chèn vào.
 
 Khi đã có đủ thông tin để trả lời người dùng:
 Thought: Tôi đã có đủ thông tin. Tổng hợp và trả lời.
