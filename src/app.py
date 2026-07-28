@@ -437,41 +437,67 @@ def run_all_test_cases(provider, mode: str = "both"):
 # =============================================================================
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="VinHealth ReAct Agent — Lab 3")
+    parser.add_argument("--all",    action="store_true", help="Chạy toàn bộ 5 test cases (Chatbot vs Agent)")
+    parser.add_argument("--case",   type=int, choices=[1,2,3,4,5], help="Chạy 1 test case cụ thể (1-5)")
+    parser.add_argument("--mode",   choices=["chatbot","agent","both"], default="both", help="Chạy chatbot | agent | both (mặc định: both)")
+    parser.add_argument("--bonus",  action="store_true", help="Chạy demo Bonus Cấp 4 (Autonomous Agent)")
+    args = parser.parse_args()
+
     print("=" * 60)
     print("🏥 VINHEALTH — TRỢ LÝ ĐẶT LỊCH KHÁM BỆNH")
     print("🏫 ĐẠI HỌC VINUNI — BÀI LAB 3: CHATBOT VS REACT AGENT")
     print("=" * 60)
 
-    # Khởi tạo LLM Provider
-    provider = get_llm_provider()
+    provider   = get_llm_provider()
     model_name = getattr(provider, "model_name", "Offline Mock Mode")
     print(f"\n🔌 Provider: {provider.__class__.__name__} | Model: {model_name}")
 
-    # Tải test cases
     tests = load_test_cases()
     print(f"✅ Đã tải {len(tests)} Test Cases từ config/test_cases.json")
 
-    # ─────────────────────────────────────────────
-    # DEMO 1: Chatbot Baseline vs ReAct Agent
-    # Chạy test case #3 (Multi-step, cần 1 Tool)
-    # ─────────────────────────────────────────────
-    print(f"\n{'─'*60}")
-    print("🎬 DEMO: Test Case #3 — So sánh Chatbot vs ReAct Agent")
-    sample_query = tests[2]["question"]
+    # ── Option 1: Chạy toàn bộ 5 test cases ──────────────────
+    if args.all:
+        for tc in tests:
+            print(f"\n{'─'*60}")
+            print(f"📌 Test Case #{tc['id']} [{tc['category']}]")
+            print(f"❓ Câu hỏi: {tc['question']}")
+            if args.mode in ("chatbot", "both"):
+                run_baseline_chatbot(tc["question"], provider)
+            if args.mode in ("agent", "both"):
+                run_react_agent(tc["question"], provider)
 
-    print("\n--- ❶ CHẠY CHATBOT BASELINE ---")
-    run_baseline_chatbot(sample_query, provider)
+    # ── Option 2: Chạy 1 test case cụ thể (1 đến 5) ──────────
+    elif args.case:
+        tc = tests[args.case - 1]
+        print(f"\n{'─'*60}")
+        print(f"📌 Test Case #{tc['id']} [{tc['category']}]")
+        print(f"❓ Câu hỏi: {tc['question']}")
+        if args.mode in ("chatbot", "both"):
+            run_baseline_chatbot(tc["question"], provider)
+        if args.mode in ("agent", "both"):
+            run_react_agent(tc["question"], provider)
 
-    print("\n--- ❷ CHẠY REACT AGENT ---")
-    run_react_agent(sample_query, provider)
+    # ── Option 3: Chạy Bonus Cấp 4 (Autonomous Agent) ─────────
+    elif args.bonus:
+        print(f"\n{'─'*60}")
+        print("🎬 BONUS Cấp 4: Autonomous Agent — Multi-turn Memory")
+        autonomous = AutonomousAgent(provider)
+        autonomous.chat("Tôi bị đau đầu và chóng mặt từ sáng. Nên khám khoa nào?")
+        autonomous.chat("Okay, vậy đặt lịch hôm nay cho tôi với tên Trần Thị Vân Anh nhé.")
 
-    # ─────────────────────────────────────────────
-    # NOTE: Để chạy thêm test cases hoặc Bonus Cấp 4,
-    # gọi riêng từng hàm để tránh rate limit API:
-    #   run_react_agent(tests[4]["question"], provider)  # Edge case #5
-    #   autonomous = AutonomousAgent(provider)           # Cấp 4
-    #   autonomous.chat("Tôi bị đau đầu...")
-    # ─────────────────────────────────────────────
+    # ── Mặc định: Chạy demo Test Case #3 ─────────────────────
+    else:
+        print(f"\n{'─'*60}")
+        print("🎬 DEMO: Test Case #3 — So sánh Chatbot vs ReAct Agent")
+        print("💡 Gợi ý: Bạn có thể dùng --case [1-5], --all, hoặc --bonus để thử nghiệm các chế độ khác.\n")
+        sample_query = tests[2]["question"]
+        print("\n--- ❶ CHẠY CHATBOT BASELINE ---")
+        run_baseline_chatbot(sample_query, provider)
+        print("\n--- ❷ CHẠY REACT AGENT ---")
+        run_react_agent(sample_query, provider)
 
     print(f"\n{'='*60}")
     print("✅ KẾT THÚC DEMO — Cảm ơn bạn đã sử dụng VinHealth Agent!")
